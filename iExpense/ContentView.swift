@@ -8,33 +8,57 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var expenses = Expenses()
+    @ObservedObject var expenses = Expenses()
     @State private var showingAddExpense = false
-    
+
     var body: some View {
         NavigationView {
             List {
                 ForEach(expenses.items) { item in
-                    Text(item.name)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(item.name)
+                                .font(.headline)
+                            Text(item.type)
+                        }
+
+                        Spacer()
+                        Text("€\(item.amount)")
+                            .foregroundColor(
+                                item.amount < 10 ? .green :
+                                    item.amount >= 100 ? .red : nil
+                            )
+                    }
                 }
                 .onDelete(perform: removeItems)
+                .onMove(perform: moveItems)
             }
             .navigationTitle("iExpense")
             .toolbar {
-                Button {
-                   showingAddExpense = true
-                } label: {
-                    Image(systemName: "plus")
+                ToolbarItem(placement: .navigationBarLeading) {
+                    EditButton()
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingAddExpense = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
-            .sheet(isPresented: $showingAddExpense) {
-                AddView(expenses: expenses)
-            }
+        }
+        .sheet(isPresented: $showingAddExpense) {
+            AddView(expenses: expenses)
         }
     }
-    
-    func removeItems(at offSets: IndexSet) {
-        expenses.items.remove(atOffsets: offSets)
+
+    func removeItems(at offsets: IndexSet) {
+        expenses.items.remove(atOffsets: offsets)
+    }
+
+    func moveItems(from source: IndexSet, to dest: Int) {
+        expenses.items.move(fromOffsets: source, toOffset: dest)
     }
 }
 
